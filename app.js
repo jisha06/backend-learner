@@ -2,7 +2,7 @@ const Express = require("express");
 const Bodyparser = require("body-parser");
 const Cors = require("cors");
 const Mongoose = require("mongoose");
-
+const learnerModel = require("./models/students")
 const UserModel = require('./models/User')
 const AdminModel = require('./models/Admin')
 const bcrypt = require('bcrypt')
@@ -67,7 +67,9 @@ app.post('/signin', async (req, res) => {
 
 
 //View User List
-app.get("/viewuser/:query", async (req, res) => {
+app.post("/viewuser/:query", async (req, res) => {
+    var data = req.body
+    console.log(data)
     var q = req.params.query;
 
     const keys = ["name", "emailid", "location", "position"]
@@ -199,6 +201,18 @@ app.get('/data', async (req, res) => {
     }
   });
 
+  app.post('/cvupload', async (req, res) => {
+    var data = req.body
+   
+    console.log(data)
+    await learnerModel.insertMany(data)
+    if (data) {
+        res.json({ "status": "Success", "Data": data })       
+    }
+    else {
+        res.json({ "status": "error", "Error": error })
+    }
+  })
 //jwt token verification
 // app.post("/students",(req,res)=>{
 //     jwt.verify(req.body.token,"Learner",(error,decoded)=>{
