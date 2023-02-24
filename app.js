@@ -19,11 +19,11 @@ app.use(Cors());
 app.use(express.static(path.join(__dirname,'/build')));
 
 Mongoose.connect("mongodb+srv://jisha:jisha@cluster0.a2wdl3u.mongodb.net/employeeDB?retryWrites=true&w=majority", { useNewUrlParser: true })
-const serverurl ="/api"
+//const serverurl ="/api"
 //const serverurl = ""
 
 //Login
-app.post(`${serverurl}/signin`, async (req, res) => {
+app.post(`/api/signin`, async (req, res) => {
     var getEmailid = req.body.emailid
     var getpassword = req.body.password
     let data = []
@@ -58,7 +58,7 @@ app.post(`${serverurl}/signin`, async (req, res) => {
 })
 
 //View User List
-app.post(`${serverurl}/viewuser/:query`, async (req, res) => {
+app.post(`/api/viewuser/:query`, async (req, res) => {
     var data = req.body
     console.log(data)
     var q = req.params.query;
@@ -84,7 +84,7 @@ app.post(`${serverurl}/viewuser/:query`, async (req, res) => {
 })
 
 //Add Users
-app.post(`${serverurl}/addUser`, async (req, res) => {
+app.post(`/api/addUser`, async (req, res) => {
     console.log(req.body)
 
     const newUser = new UserModel({
@@ -106,7 +106,7 @@ app.post(`${serverurl}/addUser`, async (req, res) => {
 })
 
 //get user by id
-app.post(`${serverurl}/getuser`, async (req, res) => {
+app.post(`/api/getuser`, async (req, res) => {
     var data = req.body
 
     console.log(data._id)
@@ -120,7 +120,7 @@ app.post(`${serverurl}/getuser`, async (req, res) => {
 })
 
 //update user
-app.put(`${serverurl}/updateUser`, async (req, res) => {
+app.put(`/api/updateUser`, async (req, res) => {
     let data = req.body
     console.log(data.name, data.emailid, data.location, data.position, data.salary)
 
@@ -147,7 +147,7 @@ app.put(`${serverurl}/updateUser`, async (req, res) => {
 })
 
 //delete User
-app.delete(`${serverurl}/deleteUser/:id`, (req, res) => {
+app.delete(`/api/deleteUser/:id`, (req, res) => {
     var data = req.params.id;
     console.log(req.params.id)
     console.log(data)
@@ -166,7 +166,7 @@ app.delete(`${serverurl}/deleteUser/:id`, (req, res) => {
 
 //Student
 //add student
-app.post(`${serverurl}/addlearner`, async (req, res) => {
+app.post(`/api/addlearner`, async (req, res) => {
     let data = new learnerModel(req.body)
     console.log(data)
     await data.save()
@@ -174,7 +174,7 @@ app.post(`${serverurl}/addlearner`, async (req, res) => {
 })
 
 //get student
-app.get(`${serverurl}/data`, async (req, res) => {
+app.get(`/api/data`, async (req, res) => {
     try {
         const data = await learnerModel.find();
         res.json(data);
@@ -184,7 +184,7 @@ app.get(`${serverurl}/data`, async (req, res) => {
     }
 });
 //update placement
-app.put(`${serverurl}/learners/:id/placement`, async (req, res) => {
+app.put(`/api/learners/:id/placement`, async (req, res) => {
     try {
         const updatedLearner = await learnerModel.updateOne(
             { _id: req.params.id },
@@ -198,7 +198,7 @@ app.put(`${serverurl}/learners/:id/placement`, async (req, res) => {
 });
 
 //upload csv file
-app.post(`${serverurl}/cvupload`, async (req, res) => {
+app.post(`/api/cvupload`, async (req, res) => {
     var data = req.body;
 
     console.log(data)
