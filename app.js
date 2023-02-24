@@ -17,18 +17,22 @@ app.use(Bodyparser.urlencoded({ extended: true }))
 app.use(Cors());
 
 Mongoose.connect("mongodb+srv://jisha:jisha@cluster0.a2wdl3u.mongodb.net/employeeDB?retryWrites=true&w=majority", { useNewUrlParser: true })
-
+//const serverurl ="api"
+const serverurl=""
 //Login
-app.post('/signin', async (req, res) => {
+app.post(`${serverurl}/signin`, async (req, res) => {
     var getEmailid = req.body.emailid
     var getpassword = req.body.password
-    let model = UserModel;
-    if (getEmailid == "admin@gmail.com") model = AdminModel
-
-    let result = model.find({ emailid: getEmailid }, (err, data) => {
+    let data= []
+    const adminuser = await AdminModel.find({ emailid: getEmailid })
+    const learnerUser =  await UserModel.find({ emailid: getEmailid })
+   if(adminuser.length>0){data = adminuser}
+   else{  data = learnerUser }
+   
         if (data.length > 0) {
+            console.log(data)
             const passwordValidator = bcrypt.compareSync(getpassword, data[0].password)
-            
+
             if (passwordValidator) {
 
                 jwt.sign({ email: getEmailid }, "Learner", { expiresIn: "1d" },
@@ -46,8 +50,7 @@ app.post('/signin', async (req, res) => {
         }
         else {
             res.json({ "status": "failed", "data": "Invalid Email id" })
-        }
-    })
+        }    
 
 })
 
@@ -67,7 +70,7 @@ app.post('/signin', async (req, res) => {
 
 
 //View User List
-app.post("/viewuser/:query", async (req, res) => {
+app.post(`${serverurl}/viewuser/:query`, async (req, res) => {
     var data = req.body
     console.log(data)
     var q = req.params.query;
@@ -93,9 +96,9 @@ app.post("/viewuser/:query", async (req, res) => {
 })
 
 //Add Users
-app.post('/addUser', async (req, res) => {
+app.post(`${serverurl}/addUser`, async (req, res) => {
     console.log(req.body)
-   
+
     const newUser = new UserModel({
         name: req.body.name,
         emailid: req.body.emailid,
@@ -114,7 +117,7 @@ app.post('/addUser', async (req, res) => {
 })
 
 //get user by id
-app.post("/getuser", async (req, res) => {
+app.post(`${serverurl}/getuser`, async (req, res) => {
     var data = req.body
 
     console.log(data._id)
@@ -128,7 +131,7 @@ app.post("/getuser", async (req, res) => {
 })
 
 //update user
-app.put('/updateUser', async (req, res) => {
+app.put(`${serverurl}/updateUser`, async (req, res) => {
     let data = req.body
     console.log(data.name, data.emailid, data.location, data.position, data.salary)
 
@@ -155,7 +158,7 @@ app.put('/updateUser', async (req, res) => {
 })
 
 //delete User
-app.delete('/deleteUser/:id', (req, res) => {
+app.delete(`${serverurl}/deleteUser/:id`, (req, res) => {
     var data = req.params.id;
     console.log(req.params.id)
     console.log(data)
@@ -173,46 +176,53 @@ app.delete('/deleteUser/:id', (req, res) => {
 })
 
 //Student
-app.post("/api/addlearner",async(req,res)=>{
+app.post(`${serverurl}/addlearner`, async (req, res) => {
     let data = new learnerModel(req.body)
     console.log(data)
     await data.save()
-    res.json({"status":"success","data":data})
+    res.json({ "status": "success", "data": data })
 })
-app.get('/data', async (req, res) => {
+app.get(`${serverurl}/data`, async (req, res) => {
     try {
-      const data = await learnerModel.find();
-      res.json(data);
+        const data = await learnerModel.find();
+        res.json(data);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server error' });
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
     }
-  });
-  app.put('/learners/:id/placement', async (req, res) => {
+});
+app.put(`${serverurl}/learners/:id/placement`, async (req, res) => {
     try {
-      const updatedLearner = await learnerModel.updateOne(
-        { _id: req.params.id },
-        { placementStatus: req.body.placementStatus }
-      );
-      res.json(updatedLearner);
+        const updatedLearner = await learnerModel.updateOne(
+            { _id: req.params.id },
+            { placementStatus: req.body.placementStatus }
+        );
+        res.json(updatedLearner);
     } catch (err) {
-      console.error(err.message);
-      res.status(500).send('Server Error');
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-  });
+});
 
-  app.post('/cvupload', async (req, res) => {
-    var data = req.body
+app.post(`${serverurl}/cvupload`, async (req, res) => {
+    var data = req.body;
    
     console.log(data)
-    await learnerModel.insertMany(data)
     if (data) {
-        res.json({ "status": "Success", "Data": data })       
+        await learnerModel.insertMany(data)
+        if (data) {
+            res.json({ "status": "Success", "Data": data })
+        }
+        else {
+            res.json({ "status": "error", "Error": error })
+        }
     }
-    else {
-        res.json({ "status": "error", "Error": error })
+    else
+    {
+        res.json({ "status": "error", "Error": "Data is null" })
     }
-  })
+
+})
 //jwt token verification
 // app.post("/students",(req,res)=>{
 //     jwt.verify(req.body.token,"Learner",(error,decoded)=>{
@@ -226,6 +236,22 @@ app.get('/data', async (req, res) => {
 //             res.json({"status": "unauthorsied user"})
 //         }
 //     })
+// })
+// jwt.verify(req.body.token, "Learner", (error, decoded) => {
+//     if (decoded && decoded.email) {
+//         console.log(decoded.email)
+//         var result = UserModel.find();
+//         if (q == 0) {
+//             res.send(result)
+//         }
+//         else {
+//             res.send(search(result))
+//         }
+//     }
+
+//     else {
+//         res.json({ "status": "unauthorsied user" })
+//     }
 // })
 
 app.listen((3001), () => {
