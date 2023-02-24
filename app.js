@@ -8,7 +8,7 @@ const AdminModel = require('./models/Admin')
 const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken");
 const { json } = require("body-parser");
-
+const path = require('path');
 
 
 const app = new Express();
@@ -16,58 +16,46 @@ app.use(Bodyparser.json());
 app.use(Bodyparser.urlencoded({ extended: true }))
 app.use(Cors());
 
+app.use(express.static(path.join(__dirname,'/build')));
+
 Mongoose.connect("mongodb+srv://jisha:jisha@cluster0.a2wdl3u.mongodb.net/employeeDB?retryWrites=true&w=majority", { useNewUrlParser: true })
-//const serverurl ="api"
-const serverurl=""
+const serverurl ="api"
+//const serverurl = ""
+
 //Login
 app.post(`${serverurl}/signin`, async (req, res) => {
     var getEmailid = req.body.emailid
     var getpassword = req.body.password
-    let data= []
+    let data = []
     const adminuser = await AdminModel.find({ emailid: getEmailid })
-    const learnerUser =  await UserModel.find({ emailid: getEmailid })
-   if(adminuser.length>0){data = adminuser}
-   else{  data = learnerUser }
-   
-        if (data.length > 0) {
-            console.log(data)
-            const passwordValidator = bcrypt.compareSync(getpassword, data[0].password)
+    const learnerUser = await UserModel.find({ emailid: getEmailid })
+    if (adminuser.length > 0) { data = adminuser }
+    else { data = learnerUser }
 
-            if (passwordValidator) {
+    if (data.length > 0) {
+        console.log(data)
+        const passwordValidator = bcrypt.compareSync(getpassword, data[0].password)
 
-                jwt.sign({ email: getEmailid }, "Learner", { expiresIn: "1d" },
-                    (err, token) => {
-                        if (err) {
-                            res.json({ "status": "error", "error": err })
-                        } else {
-                            res.json({ "status": "success", "data": data, "token": token })
-                        }
-                    })
-            }
-            else {
-                res.json({ "status": "failed", "data": "Invalid password" })
-            }
+        if (passwordValidator) {
+
+            jwt.sign({ email: getEmailid }, "Learner", { expiresIn: "1d" },
+                (err, token) => {
+                    if (err) {
+                        res.json({ "status": "error", "error": err })
+                    } else {
+                        res.json({ "status": "success", "data": data, "token": token })
+                    }
+                })
         }
         else {
-            res.json({ "status": "failed", "data": "Invalid Email id" })
-        }    
+            res.json({ "status": "failed", "data": "Invalid password" })
+        }
+    }
+    else {
+        res.json({ "status": "failed", "data": "Invalid Email id" })
+    }
 
 })
-
-
-// app.post('/signup', async (req, res) => {
-//     let data = new AdminModel({
-//         name: req.body.name,
-//         emailid: req.body.emailid,
-//         password: bcrypt.hashSync(req.body.password, 10),
-//         position: req.body.position
-//     })
-//     console.log(data)
-//     await data.save()
-
-//     res.json({ "status": "success", "data": data })
-// })
-
 
 //View User List
 app.post(`${serverurl}/viewuser/:query`, async (req, res) => {
@@ -104,7 +92,8 @@ app.post(`${serverurl}/addUser`, async (req, res) => {
         emailid: req.body.emailid,
         password: bcrypt.hashSync(req.body.password, 10),
         location: req.body.location,
-        position: req.body.position
+        position: req.body.position,
+        salary: req.body.salary
     })
     await newUser.save((error, data) => {
         if (data) {
@@ -176,12 +165,15 @@ app.delete(`${serverurl}/deleteUser/:id`, (req, res) => {
 })
 
 //Student
+//add student
 app.post(`${serverurl}/addlearner`, async (req, res) => {
     let data = new learnerModel(req.body)
     console.log(data)
     await data.save()
     res.json({ "status": "success", "data": data })
 })
+
+//get student
 app.get(`${serverurl}/data`, async (req, res) => {
     try {
         const data = await learnerModel.find();
@@ -191,6 +183,7 @@ app.get(`${serverurl}/data`, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
+//update placement
 app.put(`${serverurl}/learners/:id/placement`, async (req, res) => {
     try {
         const updatedLearner = await learnerModel.updateOne(
@@ -204,9 +197,10 @@ app.put(`${serverurl}/learners/:id/placement`, async (req, res) => {
     }
 });
 
+//upload csv file
 app.post(`${serverurl}/cvupload`, async (req, res) => {
     var data = req.body;
-   
+
     console.log(data)
     if (data) {
         await learnerModel.insertMany(data)
@@ -217,42 +211,14 @@ app.post(`${serverurl}/cvupload`, async (req, res) => {
             res.json({ "status": "error", "Error": error })
         }
     }
-    else
-    {
+    else {
         res.json({ "status": "error", "Error": "Data is null" })
     }
 
 })
-//jwt token verification
-// app.post("/students",(req,res)=>{
-//     jwt.verify(req.body.token,"Learner",(error,decoded)=>{
-//         if(decoded && decoded.emailid)
-//         {
-//             let data = new studenModel ({studentId: req.body.id})
-//             data.save()
-//             res.json({"status": "Added Successfuly"})
-//         }
-//         else{
-//             res.json({"status": "unauthorsied user"})
-//         }
-//     })
-// })
-// jwt.verify(req.body.token, "Learner", (error, decoded) => {
-//     if (decoded && decoded.email) {
-//         console.log(decoded.email)
-//         var result = UserModel.find();
-//         if (q == 0) {
-//             res.send(result)
-//         }
-//         else {
-//             res.send(search(result))
-//         }
-//     }
 
-//     else {
-//         res.json({ "status": "unauthorsied user" })
-//     }
-// })
+app.get('/*', function(req, res) {
+    res.sendFile(path.join(__dirname,'/build/index.html')); });
 
 app.listen((3001), () => {
     console.log("server started")
