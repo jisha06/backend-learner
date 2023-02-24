@@ -16,7 +16,7 @@ app.use(Bodyparser.json());
 app.use(Bodyparser.urlencoded({ extended: true }))
 app.use(Cors());
 
-app.use(express.static(path.join(__dirname,'/build')));
+app.use(Express.static(path.join(__dirname,'/build')));
 
 Mongoose.connect("mongodb+srv://jisha:jisha@cluster0.a2wdl3u.mongodb.net/employeeDB?retryWrites=true&w=majority", { useNewUrlParser: true })
 //const serverurl ="/api"
